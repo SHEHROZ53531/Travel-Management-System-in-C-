@@ -4,10 +4,11 @@
 #include <windows.h>
 #include <stack>
 #include <vector>
+#include <limits>
 #include <algorithm>
+#include <string> 
 
 using namespace std;
-
 
 void menu();
 
@@ -42,14 +43,16 @@ public:
 
             cout << "Enter Customer ID       : ";
             cin >> cusID;
+            cin.ignore(); // Clear input buffer
             cout << "Enter Full Name         : ";
-            cin >> name;
+            getline(cin, name);
             cout << "Enter Age               : ";
             cin >> age;
             cout << "Enter Mobile Number     : ";
             cin >> mobileNo;
+            cin.ignore(); // Clear input buffer
             cout << "Enter Address           : ";
-            cin >> address;
+            getline(cin, address);
             cout << "Enter Gender (M/F/Other): ";
             cin >> gender;
 
@@ -73,7 +76,6 @@ public:
         else {
             cout << "Error: Unable to open the file for saving details!" << endl;
         }
-        // Ask user if they want to go back to the main menu or exit
         int choice;
         cout << "Press 1 to return to the main menu or 2 to exit the program: ";
         cin >> choice;
@@ -89,18 +91,101 @@ public:
 
     void showDetails() {
         ifstream in("old-customers.txt");
-        {
-            if (!in) {
-                cout << "File Error!" << endl;
-                return;
-            }
-            while (!(in.eof())) {
-                in.getline(all, 999);
-                cout << all << endl;
-            }
-            in.close();
+        if (!in) {
+            cout << "File Error!" << endl;
+            return;
         }
-        // Ask user if they want to go back to the main menu or exit
+        while (!in.eof()) {
+            in.getline(all, 999);
+            cout << all << endl;
+        }
+        in.close();
+
+        int choice;
+        cout << "\nPress 1 to return to the main menu or 2 to exit the program: ";
+        cin >> choice;
+        system("CLS");
+        if (choice == 1) {
+            menu();
+        }
+        else {
+            cout << "Thank you for using the Travel Management System!" << endl;
+            exit(0);
+        }
+    }
+
+    void searchCustomer() {
+        int searchID;
+        cout << "Enter the Customer ID to search: ";
+        cin >> searchID;
+
+        ifstream in("old-customers.txt");
+        if (!in) {
+            cout << "File Error!" << endl;
+            return;
+        }
+
+        string line;
+        bool found = false;
+        string searchString = "Customer ID   : " + to_string(searchID); // Use to_string correctly
+
+        while (getline(in, line)) {
+            if (line.find(searchString) != string::npos) {
+                cout << "\nCustomer Found:" << endl;
+                cout << line << endl;
+
+                for (int i = 0; i < 6; i++) {
+                    if (getline(in, line)) {
+                        cout << line << endl;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                found = true;
+                break;
+            }
+        }
+        in.close();
+
+        if (!found) {
+            cout << "\nCustomer with ID " << searchID << " not found!" << endl;
+        }
+
+        int choice;
+        cout << "\nPress 1 to return to the main menu or 2 to exit the program: ";
+        cin >> choice;
+        system("CLS");
+        if (choice == 1) {
+            menu();
+        }
+        else {
+            cout << "Thank you for using the Travel Management System!" << endl;
+            exit(0);
+        }
+    }
+
+    void sortCustomers() {
+        ifstream in("old-customers.txt");
+        if (!in) {
+            cout << "File Error!" << endl;
+            return;
+        }
+
+        vector<string> customers;
+        string line;
+        while (getline(in, line)) {
+            customers.push_back(line);
+        }
+        in.close();
+
+        sort(customers.begin(), customers.end());
+
+        cout << "\nSorted Customer Details:" << endl;
+        for (const auto& customer : customers) {
+            cout << customer << endl;
+        }
+
         int choice;
         cout << "\nPress 1 to return to the main menu or 2 to exit the program: ";
         cin >> choice;
@@ -116,6 +201,8 @@ public:
 };
 
 int Customer::cusID;
+
+
 
 class Cabs {
 public:
@@ -454,11 +541,11 @@ public:
 
 void menu() {
     int mainChoice;
-    static Customer customer;        
-    static Cabs cab;              
+    static Customer customer;
+    static Cabs cab;
     static Booking booking;
     Receipt receipt;
-    static ExploreTours tours;     
+    static ExploreTours tours;
     static TravelInsurance insurance;
 
     cout << "\n\t\t\t* Welcome to ABC Travels *\n" << endl;
@@ -470,18 +557,19 @@ void menu() {
     cout << "|                                                           |" << endl;
     cout << "|   1. Add New Customer                                     |" << endl;
     cout << "|   2. View Customer Details                                |" << endl;
-    cout << "|   3. Book a Cab                                           |" << endl;
-    cout << "|   4. Book a Hotel                                         |" << endl;
-    cout << "|   5. Tour Packages                                        |" << endl;
-    cout << "|   6. Insurance Plans                                      |" << endl;
-    cout << "|   7. Generate Receipt                                     |" << endl;
-    cout << "|   8. Exit                                                 |" << endl;
+    cout << "|   3. Search for a Customer                                |" << endl;
+    cout << "|   4. Sort Customer Details                                |" << endl;
+    cout << "|   5. Book a Cab                                           |" << endl;
+    cout << "|   6. Book a Hotel                                         |" << endl;
+    cout << "|   7. Tour Packages                                        |" << endl;
+    cout << "|   8. Insurance Plans                                      |" << endl;
+    cout << "|   9. Generate Receipt                                     |" << endl;
+    cout << "|   10. Exit                                                |" << endl;
     cout << "|                                                           |" << endl;
     cout << "-------------------------------------------------------------" << endl;
 
-    cout << "\nPlease enter your choice (1-8): ";
+    cout << "\nPlease enter your choice (1-10): ";
     cin >> mainChoice;
-
 
     switch (mainChoice) {
     case 1:
@@ -491,18 +579,24 @@ void menu() {
         customer.showDetails();
         break;
     case 3:
-        cab.cabDetails();
+        customer.searchCustomer();
         break;
     case 4:
-        booking.hotels();
+        customer.sortCustomers();
         break;
     case 5:
-        tours.showPackages();
+        cab.cabDetails();
         break;
     case 6:
-        insurance.showInsurancePlans();
+        booking.hotels();
         break;
     case 7:
+        tours.showPackages();
+        break;
+    case 8:
+        insurance.showInsurancePlans();
+        break;
+    case 9:
         receipt.generateReceipt(
             tours.getSelectedPackage(),
             tours.getPackageCost(),
@@ -510,8 +604,7 @@ void menu() {
             insurance.getPlanCost()
         );
         break;
-
-    case 8:
+    case 10:
         cout << "Thank you for using the Travel Management System!" << endl;
         exit(0);
     default:
